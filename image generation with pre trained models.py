@@ -1,33 +1,25 @@
-# dalle_mini_generation.py
-# Image Generation using Pretrained DALL-E Mini (Craiyon)
+# stable_diffusion_generation.py
+# Image generation using pretrained Stable Diffusion model
 
-import requests
-from PIL import Image
-from io import BytesIO
-import time
+from diffusers import StableDiffusionPipeline
+import torch
 
-def generate_image(prompt):
-    print("Sending request to DALL-E Mini (Craiyon)...")
+def generate_image(prompt, output_name="sd_output.png"):
+    print("Loading Stable Diffusion model...")
+    model_id = "runwayml/stable-diffusion-v1-5"
 
-    url = "https://api.craiyon.com/v3/draw"
-    payload = {"prompt": prompt}
+    pipe = StableDiffusionPipeline.from_pretrained(
+        model_id,
+        torch_dtype=torch.float16
+    ).to("cuda")
 
-    response = requests.post(url, json=payload)
+    print("Generating image...")
+    img = pipe(prompt).images[0]
+    img.save(output_name)
 
-    if response.status_code != 200:
-        raise Exception("Error: Unable to generate image.")
-
-    data = response.json()
-    print("Images generated! Saving...")
-
-    for idx, img_data in enumerate(data["images"]):
-        image_bytes = BytesIO(bytes(img_data))
-        img = Image.open(image_bytes)
-        img.save(f"dalle_mini_output_{idx+1}.png")
-
-    print("Saved all images!")
+    print(f"Image saved as {output_name}")
 
 
 if __name__ == "__main__":
-    text = input("Enter prompt for DALL-E Mini: ")
-    generate_image(text)
+    prompt = input("Enter prompt for Stable Diffusion: ")
+    generate_image(prompt)
